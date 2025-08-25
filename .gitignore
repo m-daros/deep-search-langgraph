@@ -1,0 +1,8 @@
+.venv/*
+
+/.env
+/.langgraph_api/*
+/.idea/*
+
+**/__pycache__/*
+/deployment/docker-compose.yml

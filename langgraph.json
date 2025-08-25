@@ -1,0 +1,14 @@
+{
+  "dockerfile_lines": [],
+  "graphs": {
+    "Deep Search Agent Graph": "./src/deep_search_langgraph/graph.py:graph",
+    "Planner SubGraph": "./src/deep_search_langgraph/planner/planner.py:graph",
+    "Searcher SubGraph": "./src/deep_search_langgraph/searcher/searcher.py:graph",
+    "Writer SubGraph": "./src/deep_search_langgraph/writer/writer.py:graph"
+  },
+  "env": "./.env",
+  "python_version": "3.12",
+  "dependencies": [
+    "."
+  ]
+}
