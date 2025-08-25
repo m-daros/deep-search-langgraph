@@ -1,13 +1,14 @@
 import ast
 from typing import Literal
 
-from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import HumanMessage
 from langgraph.constants import START, END
-from langgraph.graph import MessagesState, StateGraph
+from langgraph.graph import StateGraph
+from langgraph.types import interrupt
 
 from src.deep_search_langgraph.common.common import get_today_str, get_llm
 from src.deep_search_langgraph.common.prompts import clarify_with_user, transform_messages_into_research_topic
-from src.deep_search_langgraph.planner.planner_state import PlannerAgentState
+from src.deep_search_langgraph.planner.planner_state import PlannerAgentState, AskHuman
 
 NODE_PLAN_SEARCH: str       = "plan_searches"
 NODE_CLARIFY_WITH_USER: str = "clarify_with_user"
@@ -24,7 +25,7 @@ class Planner:
         
         message = transform_messages_into_research_topic.format ( messages = state.messages, date = get_today_str () )
         
-        return { "messages": [ get_llm ().invoke ( [ message ] ) ] }
+        return { "messages": [ get_llm ().bind_tools ( tools = [ AskHuman ] ).invoke ( input = [ message ] ) ] }
 
 
     def clarify_with_user ( self , state: PlannerAgentState ):
@@ -52,30 +53,37 @@ class Planner:
                                        verification = clarification.verification )
 
 
-    def need_clarification ( self, state: PlannerAgentState ) -> Literal [ "__end__", "plan_searches" ]:
-#    def need_clarification ( self, state: PlannerAgentState ) -> Literal [ "clarify_with_user", "plan_searches" ]:
+    def need_clarification ( self, state: PlannerAgentState ) -> Literal [ "ask_human", "plan_searches" ]:
 
         if state.need_clarification:
-            return END
-#            return "clarify_with_user"
-
+            return "ask_human"
         else:
             return "plan_searches"
 
+    def ask_human ( self, state: PlannerAgentState ):
 
+        user_answer = interrupt ( state.question )
+
+        return PlannerAgentState ( messages = state.messages + [ HumanMessage ( content = user_answer ) ],
+                                   need_clarification = state.need_clarification,
+                                   question = state.question,
+                                   verification = state.verification )
 
 
     def build_graph ( self ):
 
         builder = StateGraph ( PlannerAgentState )
         builder.add_node ( NODE_CLARIFY_WITH_USER, self.clarify_with_user )
+        builder.add_node ( "ask_human", self.ask_human )
         builder.add_node ( NODE_PLAN_SEARCH, self.plan_searches )
 
         builder.add_edge ( START, NODE_CLARIFY_WITH_USER )
+        builder.add_edge ( "ask_human", NODE_CLARIFY_WITH_USER )
         builder.add_conditional_edges ( NODE_CLARIFY_WITH_USER, self.need_clarification )
         builder.add_edge ( NODE_PLAN_SEARCH, END )
 
         return builder.compile ()
+
 
 planner = Planner ()
 graph = planner.build_graph ()

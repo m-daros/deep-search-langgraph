@@ -15,3 +15,14 @@ class PlannerAgentState ( BaseModel):
     need_clarification: bool              = Field ( default = False, description = "Whether the user needs to be asked a clarifying question." )
     question: Optional [ str ]           = Field ( default = None, description = "A question to ask the user to clarify the report scope." )
     verification: Optional [ str ]        = Field ( default = None, description = "Verify message that we will start research after the user has provided the necessary information." )
+
+
+
+# This state class is used to let the model generate a ToolCall that we use to interrupt the graph and ask the user for a clarification
+class AskHuman ( BaseModel ):
+
+    """
+    Ask the human a question
+    """
+
+    question: str
