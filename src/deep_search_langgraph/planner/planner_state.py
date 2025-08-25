@@ -25,4 +25,4 @@ class AskHuman ( BaseModel ):
     Ask the human a question
     """
 
-    question: str
+    question: str = Field ( description = "The question to be asked to the user as clarification" )

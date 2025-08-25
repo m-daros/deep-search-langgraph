@@ -25,13 +25,13 @@ class Planner:
         
         message = transform_messages_into_research_topic.format ( messages = state.messages, date = get_today_str () )
         
-        return { "messages": [ get_llm ().bind_tools ( tools = [ AskHuman ] ).invoke ( input = [ message ] ) ] }
+        return { "messages": [ get_llm ().invoke ( input = [ message ] ) ] }
 
 
     def clarify_with_user ( self , state: PlannerAgentState ):
 
         message = clarify_with_user.format ( messages = state.messages, date = get_today_str () )
-        clarification = get_llm ().with_structured_output ( PlannerAgentState ).invoke ( message )
+        clarification = get_llm ().bind_tools ( tools = [ AskHuman ] ).with_structured_output ( PlannerAgentState ).invoke ( input = [ message ] )
         
         if clarification.need_clarification:
             # Add the question as an AI message
