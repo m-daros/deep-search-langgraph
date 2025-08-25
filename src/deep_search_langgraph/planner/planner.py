@@ -1,4 +1,3 @@
-import ast
 from typing import Literal
 
 from langchain_core.messages import HumanMessage
@@ -10,8 +9,11 @@ from src.deep_search_langgraph.common.common import get_today_str, get_llm
 from src.deep_search_langgraph.common.prompts import clarify_with_user, transform_messages_into_research_topic
 from src.deep_search_langgraph.planner.planner_state import PlannerAgentState, AskHuman
 
+
+
 NODE_PLAN_SEARCH: str       = "plan_searches"
 NODE_CLARIFY_WITH_USER: str = "clarify_with_user"
+NODE_ASK_HUMAN: str         = "ask_human"
 
 
 class Planner:
@@ -74,11 +76,11 @@ class Planner:
 
         builder = StateGraph ( PlannerAgentState )
         builder.add_node ( NODE_CLARIFY_WITH_USER, self.clarify_with_user )
-        builder.add_node ( "ask_human", self.ask_human )
+        builder.add_node ( NODE_ASK_HUMAN, self.ask_human )
         builder.add_node ( NODE_PLAN_SEARCH, self.plan_searches )
 
         builder.add_edge ( START, NODE_CLARIFY_WITH_USER )
-        builder.add_edge ( "ask_human", NODE_CLARIFY_WITH_USER )
+        builder.add_edge ( NODE_ASK_HUMAN, NODE_CLARIFY_WITH_USER )
         builder.add_conditional_edges ( NODE_CLARIFY_WITH_USER, self.need_clarification )
         builder.add_edge ( NODE_PLAN_SEARCH, END )
 
@@ -87,7 +89,3 @@ class Planner:
 
 planner = Planner ()
 graph = planner.build_graph ()
-
-# TODO La logicaad oggetti non sembra facilitare l'uso dei metodi (nodi) da parte del grafo principale
-def plan_searches ( state: PlannerAgentState ):
-    return planner.plan_searches ( state )
