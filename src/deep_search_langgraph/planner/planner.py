@@ -1,11 +1,12 @@
 from typing import Literal
 
+from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage
 from langgraph.constants import START, END
 from langgraph.graph import StateGraph
 from langgraph.types import interrupt
 
-from src.deep_search_langgraph.common.common import get_today_str, get_llm
+from src.deep_search_langgraph.common.common import get_today_str, LLM_MODEL_NAME
 from src.deep_search_langgraph.common.prompts import clarify_with_user, transform_messages_into_research_topic
 from src.deep_search_langgraph.planner.planner_state import PlannerAgentState, AskHuman
 
@@ -27,13 +28,13 @@ class Planner:
         
         message = transform_messages_into_research_topic.format ( messages = state.messages, date = get_today_str () )
         
-        return { "messages": [ get_llm ().invoke ( input = [ message ] ) ] }
+        return { "messages": [ init_chat_model ( model = LLM_MODEL_NAME ).invoke ( input = [ message ] ) ] }
 
 
     def clarify_with_user ( self , state: PlannerAgentState ):
 
         message = clarify_with_user.format ( messages = state.messages, date = get_today_str () )
-        clarification = get_llm ().bind_tools ( tools = [ AskHuman ] ).with_structured_output ( PlannerAgentState ).invoke ( input = [ message ] )
+        clarification = init_chat_model ( model = LLM_MODEL_NAME ).bind_tools ( tools = [ AskHuman ] ).with_structured_output ( PlannerAgentState ).invoke ( input = [ message ] )
         
         if clarification.need_clarification:
             # Add the question as an AI message

@@ -1,6 +1,8 @@
+from langchain.chat_models import init_chat_model
 from langgraph.constants import START, END
 from langgraph.graph import MessagesState, StateGraph
-from src.deep_search_langgraph.common.common import get_today_str, get_llm
+
+from src.deep_search_langgraph.common.common import LLM_MODEL_NAME
 from src.deep_search_langgraph.common.prompts import writer_prompt
 
 NODE_WRITER: str = "writer"
@@ -14,7 +16,7 @@ class Writer:
 
     def writer ( self, state: MessagesState ):
 
-        return { "messages": [ get_llm ().invoke ( [ writer_prompt ] + state [ "messages" ] ) ] }
+        return { "messages": [ init_chat_model ( model = LLM_MODEL_NAME ).invoke ( [ writer_prompt ] + state [ "messages" ] ) ] }
 
 
     def build_graph ( self ):
