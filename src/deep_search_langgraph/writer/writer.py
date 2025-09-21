@@ -15,8 +15,10 @@ class Writer:
     
 
     def writer ( self, state: MessagesState ):
-
-        return { "messages": [ init_chat_model ( model = LLM_MODEL_NAME ).invoke ( [ writer_prompt ] + state [ "messages" ] ) ] }
+        # Format the writer prompt with the contents
+        formatted_prompt = writer_prompt.format(contents=state.get("research_result", ""))
+        
+        return { "messages": [ init_chat_model ( model = LLM_MODEL_NAME ).invoke ( [ formatted_prompt ] + state [ "messages" ] ) ] }
 
 
     def build_graph ( self ):

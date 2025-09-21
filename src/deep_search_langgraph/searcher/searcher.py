@@ -34,11 +34,22 @@ def llm_call ( state: ResearcherState ):
 
     Returns updated state with the model's response.
     """
+    # Format the research agent prompt with the current date
+    formatted_prompt = research_agent_prompt.format(date=get_today_str())
+    
+    # Create the message list
+    messages = [ SystemMessage ( content = formatted_prompt ) ]
+    
+    # If we have researcher_messages, add them
+    if state.researcher_messages:
+        messages.extend(state.researcher_messages)
+    # If we don't have messages but have a research_topic, create a human message
+    elif state.research_topic:
+        messages.append(HumanMessage(content=state.research_topic))
+    
     return {
         "researcher_messages": [
-            model_with_tools.invoke (
-                    [ SystemMessage ( content = research_agent_prompt ) ] + state.researcher_messages
-            )
+            model_with_tools.invoke ( messages )
         ]
     }
 
