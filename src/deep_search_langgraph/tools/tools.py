@@ -33,6 +33,7 @@ def tavily_search_multiple (
 
     # Execute searches sequentially. Note: yon can use AsyncTavilyClient to parallelize this step.
     search_docs = []
+
     for query in search_queries:
         result = tavily_client.search (
                 query,
@@ -40,6 +41,7 @@ def tavily_search_multiple (
                 include_raw_content = include_raw_content,
                 topic = topic
         )
+
         search_docs.append ( result )
 
     return search_docs
@@ -58,7 +60,7 @@ def format_search_output ( summarized_results: dict ) -> str:
 
     formatted_output = "Search results: \n\n"
 
-    for i, (url, result) in enumerate ( summarized_results.items (), 1 ):
+    for i, ( url, result ) in enumerate ( summarized_results.items (), 1 ):
         formatted_output += f"\n\n--- SOURCE {i}: {result['title']} ---\n"
         formatted_output += f"URL: {url}\n\n"
         formatted_output += f"SUMMARY:\n{result['content']}\n\n"
@@ -101,13 +103,13 @@ def process_search_results ( unique_results: dict ) -> dict:
     for url, result in unique_results.items ():
         # Use existing content if no raw content for summarization
         if not result.get ( "raw_content" ):
-            content = result ['content']
+            content = result [ 'content' ]
         else:
             # Summarize raw content for better processing
-            content = summarize_webpage_content ( result ['raw_content'] )
+            content = summarize_webpage_content ( result [ 'raw_content']  )
 
         summarized_results [url] = {
-            'title': result ['title'],
+            'title': result [ 'title' ],
             'content': content
         }
 

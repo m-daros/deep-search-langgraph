@@ -1,12 +1,12 @@
 import operator
 from typing import Annotated, Sequence, List, TypedDict
 
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, AnyMessage
 from langgraph.graph import add_messages
 from pydantic import BaseModel, Field
 
 
-class ResearcherState ( TypedDict ):
+class ResearcherState ( BaseModel ):
     """
     State for the research agent containing message history and research metadata.
 
@@ -14,37 +14,30 @@ class ResearcherState ( TypedDict ):
     tool calls, the research topic being investigated, compressed findings,
     and raw research notes for detailed analysis.
     """
-    researcher_messages: Annotated [ Sequence [ BaseMessage ], add_messages ]
-    tool_call_iterations: int
-    research_topic: str
-    compressed_research: str
-    raw_notes: Annotated [ List [ str ], operator.add ]
+    researcher_messages: Annotated [ Sequence [ AnyMessage ], add_messages ] = Field ( default = [], description = "Messages to be sent to the user" )
+    tool_call_iterations: int                                                = Field ( default = 0, description = "Number of iterations of the tool calls" )
+    research_topic: str                                                      = Field ( default = "", description = "The topic to search" )
+    compressed_research: str                                                 = Field ( default = "", description = "The compressed search" )
+    raw_notes: Annotated [ List [ str ], operator.add ]                      = Field ( default = [], description = "The raw research notes" )
 
 
-class ResearcherOutputState ( TypedDict ):
+class ResearcherOutputState ( BaseModel ):
     """
     Output state for the research agent containing final research results.
 
     This represents the final output of the research process with compressed
     research findings and all raw notes from the research process.
     """
-    compressed_research: str
-    raw_notes: Annotated [ List [ str ], operator.add ]
-    researcher_messages: Annotated [ Sequence [ BaseMessage ], add_messages ]
+    researcher_messages: Annotated [ Sequence [ AnyMessage ], add_messages ] = Field ( default = [], description = "Messages to be sent to the user" )
+    compressed_research: str                                                 = Field ( default = "", description = "The compressed search" )
+    raw_notes: Annotated [ List [ str ], operator.add ]                      = Field ( default = [], description = "The raw research notes" )
+
 
 
 # ===== STRUCTURED OUTPUT SCHEMAS =====
-
-class ClarifyWithUser ( BaseModel ):
-    """Schema for user clarification decisions during scoping phase."""
-    need_clarification: bool = Field ( description = "Whether the user needs to be asked a clarifying question." )
-    question: str           = Field ( description = "A question to ask the user to clarify the report scope" )
-    verification: str        = Field ( description = "Verify message that we will start research after the user has provided the necessary information." )
-
-
 class ResearchQuestion ( BaseModel ):
     """Schema for research brief generation."""
-    research_brief: str = Field ( description = "A research question that will be used to guide the research." )
+    research_brief: str = Field ( description = "A research question that will be used to guide the research" )
 
 
 class Summary ( BaseModel ):

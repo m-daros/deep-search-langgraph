@@ -37,7 +37,7 @@ def llm_call ( state: ResearcherState ):
     return {
         "researcher_messages": [
             model_with_tools.invoke (
-                    [SystemMessage ( content=research_agent_prompt )] + state ["researcher_messages"]
+                    [ SystemMessage ( content = research_agent_prompt ) ] + state.researcher_messages
             )
         ]
     }
@@ -49,24 +49,24 @@ def tool_node ( state: ResearcherState ):
     Executes all tool calls from the previous LLM responses.
     Returns updated state with tool execution results.
     """
-    tool_calls = state ["researcher_messages"] [-1].tool_calls
+    tool_calls = state.researcher_messages [-1].tool_calls
 
     # Execute all tool calls
     observations = []
     for tool_call in tool_calls:
-        tool = tools_by_name [tool_call ["name"]]
-        observations.append ( tool.invoke ( tool_call ["args"] ) )
+        tool = tools_by_name [ tool_call [ "name" ] ]
+        observations.append ( tool.invoke ( tool_call [ "args" ] ) )
 
     # Create tool message outputs
     tool_outputs = [
         ToolMessage (
-                content=observation,
-                name=tool_call ["name"],
-                tool_call_id=tool_call ["id"]
+                content = observation,
+                name = tool_call [ "name" ],
+                tool_call_id = tool_call [ "id" ]
         ) for observation, tool_call in zip ( observations, tool_calls )
     ]
 
-    return {"researcher_messages": tool_outputs}
+    return { "researcher_messages": tool_outputs }
 
 
 def compress_research ( state: ResearcherState ) -> dict:
@@ -78,19 +78,19 @@ def compress_research ( state: ResearcherState ) -> dict:
 
     system_message = compress_research_system_prompt.format ( date = get_today_str () )
 
-    messages = ( [ SystemMessage ( content=system_message )] + state.get ( "researcher_messages", [] ) +
+    messages = ( [ SystemMessage ( content = system_message )] + state.researcher_messages +
                  [ HumanMessage ( content = compress_research_human_message ) ] )
 
     response = compress_model.invoke ( messages )
 
     # Extract raw notes from tool and AI messages
-    raw_notes = [ str ( m.content ) for m in filter_messages (
-                state [ "researcher_messages" ],
+    raw_notes = [ str ( message.content ) for message in filter_messages (
+                state.researcher_messages,
                 include_types = [ "tool", "ai" ] ) ]
 
     return {
         "compressed_research": str ( response.content ),
-        "raw_notes": ["\n".join ( raw_notes )]
+        "raw_notes": [ "\n".join ( raw_notes ) ]
     }
 
 
@@ -104,7 +104,7 @@ def should_continue ( state: ResearcherState ) -> Literal [ "tool_node", "compre
         "tool_node": Continue to tool execution
         "compress_research": Stop and compress research
     """
-    messages = state [ "researcher_messages" ]
+    messages = state.researcher_messages
     last_message = messages [-1]
 
     # If the LLM makes a tool call, continue to tool execution

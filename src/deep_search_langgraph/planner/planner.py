@@ -23,12 +23,19 @@ class Planner:
         pass
 
 
-    def plan_searches ( self, state: PlannerAgentState ):
+    def plan_searches ( self, state: PlannerAgentState ) -> PlannerAgentState:
         # Proceed with planning
         
-        message = transform_messages_into_research_topic.format ( messages = state.messages, date = get_today_str () )
+        search_topic = transform_messages_into_research_topic.format ( messages = state.messages, date = get_today_str () )
         
-        return { "messages": [ init_chat_model ( model = LLM_MODEL_NAME ).invoke ( input = [ message ] ) ] }
+        answer = init_chat_model ( model = LLM_MODEL_NAME ).invoke ( input = [ search_topic ] )
+
+        # TODO Provare a restituire solo { "messages": [ .. ] } il merge con PlannerAgentState dovrebbe farlo automaticaente LangGraph
+        return PlannerAgentState ( messages = state.messages + [ answer ],
+                                   need_clarification = False,
+                                   question = None,
+                                   verification = None,
+                                   research_brief= answer.content )
 
 
     def clarify_with_user ( self , state: PlannerAgentState ):
@@ -44,7 +51,8 @@ class Planner:
             return PlannerAgentState ( messages = state.messages + [ question_message ],
                                        need_clarification = clarification.need_clarification,
                                        question = clarification.question,
-                                       verification = None )
+                                       verification = None,
+                                       research_brief= None )
         else:
             # Add verification message and proceed
             from langchain_core.messages import AIMessage
@@ -53,7 +61,8 @@ class Planner:
             return PlannerAgentState ( messages = state.messages + [ verification_message ],
                                        need_clarification = clarification.need_clarification,
                                        question = None,
-                                       verification = clarification.verification )
+                                       verification = clarification.verification,
+                                       research_brief = None )
 
 
     def need_clarification ( self, state: PlannerAgentState ) -> Literal [ "ask_human", "plan_searches" ]:
@@ -67,10 +76,12 @@ class Planner:
 
         user_answer = interrupt ( state.question )
 
+        # TODO Provare a restituire solo { "messages": [ .. ] } il merge con PlannerAgentState dovrebbe farlo automaticaente LangGraph
         return PlannerAgentState ( messages = state.messages + [ HumanMessage ( content = user_answer ) ],
                                    need_clarification = state.need_clarification,
                                    question = state.question,
-                                   verification = state.verification )
+                                   verification = state.verification,
+                                   research_brief= None )
 
 
     def build_graph ( self ):
